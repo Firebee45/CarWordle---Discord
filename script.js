@@ -172,8 +172,6 @@ function loadTodaysGame() {
     el.carImage.style.transform = `scale(${state.imageZoom})`;
 
     const revealZoomed = () => {
-        // force a reflow so the no-transition zoom is applied before we
-        // turn transitions back on for subsequent (smooth) zoom-outs
         void el.carImage.offsetWidth;
         el.carImage.style.transition = '';
         el.carImage.style.opacity = '1';
@@ -241,6 +239,42 @@ function handleSubmit() {
     }
 }
 
+function getBoardPayload() {
+    const board = [];
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        const guess = state.guessHistory[i];
+        if (guess) {
+            const mapState = (st) => {
+                if (st === 'green') return 'green';
+                if (st === 'orange') return 'yellow';
+                return 'gray'; // 'red' maps to gray tile
+            };
+            board.push([
+                mapState(guess.makeState),
+                mapState(guess.modelState),
+                mapState(guess.yearState)
+            ]);
+        } else {
+            board.push(['empty', 'empty', 'empty']);
+        }
+    }
+    return board;
+}
+
+function sendBoardToBot() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user_id');
+    if (!userId) return;
+
+    const payload = JSON.stringify({
+        user_id: userId,
+        board: getBoardPayload()
+    });
+
+    const endpoint = 'https://YOUR-PUBLIC-URL.ngrok-free.app/api/activity-closed';
+    navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
+}
+
 function endGame(won) {
     el.makeSelect.disabled = true;
     el.modelSelect.disabled = true;
@@ -255,7 +289,13 @@ function endGame(won) {
         : 'Game Over! Out of attempts.';
 
     el.answerReveal.textContent = `Answer: ${state.answerMake} ${state.answerModel} (${state.answerYear})`;
+
+    sendBoardToBot();
 }
+
+window.addEventListener('beforeunload', () => {
+    sendBoardToBot();
+});
 
 el.makeSelect.addEventListener('change', () => populateModels(el.makeSelect.value));
 el.submitBtn.addEventListener('click', handleSubmit);
