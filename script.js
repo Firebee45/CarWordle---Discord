@@ -271,7 +271,7 @@ function sendBoardToBot() {
         board: getBoardPayload()
     });
 
-    const endpoint = 'https://YOUR-PUBLIC-URL.ngrok-free.app/api/activity-closed';
+    const endpoint = 'https://soft-badgers-return.loca.lt/api/activity-closed';
     navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
 }
 
