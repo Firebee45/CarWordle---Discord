@@ -138,7 +138,7 @@ function shuffleForCycle(eligible, cycle) {
 function pickTodaysCar(dataset) {
     const eligible = dataset
         .filter(v => String(v.status).toLowerCase() === 'done')
-        .sort((a, b) => a.id - b.id);
+        .sort((a, b) => a.id.localeCompare(b.id));
 
     const n = eligible.length;
     const di = dayIndex();
@@ -166,8 +166,25 @@ function loadTodaysGame() {
     populateMakes();
     populateModels('');
 
+    el.carImage.style.transition = 'none';
+    el.carImage.style.opacity = '0';
     el.carImage.src = today.image;
     el.carImage.style.transform = `scale(${state.imageZoom})`;
+
+    const revealZoomed = () => {
+        // force a reflow so the no-transition zoom is applied before we
+        // turn transitions back on for subsequent (smooth) zoom-outs
+        void el.carImage.offsetWidth;
+        el.carImage.style.transition = '';
+        el.carImage.style.opacity = '1';
+    };
+
+    if (el.carImage.complete) {
+        requestAnimationFrame(revealZoomed);
+    } else {
+        el.carImage.addEventListener('load', revealZoomed, { once: true });
+    }
+
     el.makeSelect.value = '';
     el.modelSelect.value = '';
     el.yearInput.value = '';
