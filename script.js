@@ -239,42 +239,6 @@ function handleSubmit() {
     }
 }
 
-function getBoardPayload() {
-    const board = [];
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
-        const guess = state.guessHistory[i];
-        if (guess) {
-            const mapState = (st) => {
-                if (st === 'green') return 'green';
-                if (st === 'orange') return 'yellow';
-                return 'gray'; // 'red' maps to gray tile
-            };
-            board.push([
-                mapState(guess.makeState),
-                mapState(guess.modelState),
-                mapState(guess.yearState)
-            ]);
-        } else {
-            board.push(['empty', 'empty', 'empty']);
-        }
-    }
-    return board;
-}
-
-function sendBoardToBot() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('user_id');
-    if (!userId) return;
-
-    const payload = JSON.stringify({
-        user_id: userId,
-        board: getBoardPayload()
-    });
-
-    const endpoint = 'https://soft-badgers-return.loca.lt/api/activity-closed';
-    navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
-}
-
 function endGame(won) {
     el.makeSelect.disabled = true;
     el.modelSelect.disabled = true;
@@ -289,13 +253,7 @@ function endGame(won) {
         : 'Game Over! Out of attempts.';
 
     el.answerReveal.textContent = `Answer: ${state.answerMake} ${state.answerModel} (${state.answerYear})`;
-
-    sendBoardToBot();
 }
-
-window.addEventListener('beforeunload', () => {
-    sendBoardToBot();
-});
 
 el.makeSelect.addEventListener('change', () => populateModels(el.makeSelect.value));
 el.submitBtn.addEventListener('click', handleSubmit);
